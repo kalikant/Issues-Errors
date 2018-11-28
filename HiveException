@@ -1,0 +1,6 @@
+Error:
+org.apache.hadoop.hive.ql.metadata.HiveException: java.io.IOException: java.io.IOException: Filesystem closed
+Solution: Add below 2 in .hql
+set fs.hdfs.impl.disable.cache=false;
+set fs.file.impl.disable.cache=false; 
+ 
