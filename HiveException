@@ -1,9 +1,4 @@
-0. Error:
-org.apache.hadoop.hive.ql.metadata.HiveException: java.io.IOException: java.io.IOException: Filesystem closed
-Solution: Add below 2 in .hql
-set fs.hdfs.impl.disable.cache=false;
-set fs.file.impl.disable.cache=false; 
- 
+
 1. show create table not working: 
 Authorization failed:No privilege 'Select' found for inputs { database:database_xxxx, table:table_abc}. 
 Use SHOW GRANT to get more details.
@@ -82,4 +77,34 @@ upgrade to Hive 1.4 or greater
 Workaround:  
 Run the query without Partition pruning:
 set hive.tez.dynamic.partition.pruning=false;
+
+10. Error:
+org.apache.hadoop.hive.ql.metadata.HiveException: java.io.IOException: java.io.IOException: Filesystem closed
+Solution: Add below 2 in .hql
+set fs.hdfs.impl.disable.cache=false;
+set fs.file.impl.disable.cache=false; 
+
+11. return code 3 getting this error while performing a simple join b/w 2 tables any one of the table having huge data.                                                                                              
+In such scenario, got "Execution failed with exit status: 3".
+Processing rows: 200000 Hashtable size: 199999 Memory usage: 197529208
+Processing rows: 300000 Hashtable size: 299999 Memory usage: 163894528 ...                                                                                                                                                       
+Processing rows: 1700000 Hashtable size: 1699999 Memory usage: 901427928
+
+Error is related to some memory usage and it shown  "MapredLocalTask".                                                                                                    
+It can be solved by setting "hive.auto.convert.join" to false
+
+12. Error code 64 – This error comes due to several reasons, few of them are:
+i) Unable to Load/Insert data into table:
+FAILED: SemanticException java.io.FileNotFoundException: File 
+Hive Failure Status Code : 64 
+'show tables' or 'show create table', showing correctly but if we check 'hadoop fs -ls' – table folder does not exist
+Reason: TABLE FOLDER ITSELF is not available at HDFS, while Metastore have their entry.
+Solution: Drop and recreate the table again
+ii) Generally the hive error won't give you the actual problem and you will have to go and look in the jobs logs for more details.
+
+Table AlreadyExistExcetion
+Solution: We have used MapJoin hint in Subquery. After remove it run.
+
+iii) NullPointerException
+Solution: While run in CLI, it is not considering TAB character, while parsing.
 
