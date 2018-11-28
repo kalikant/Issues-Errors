@@ -1,6 +1,85 @@
-Error:
+0. Error:
 org.apache.hadoop.hive.ql.metadata.HiveException: java.io.IOException: java.io.IOException: Filesystem closed
 Solution: Add below 2 in .hql
 set fs.hdfs.impl.disable.cache=false;
 set fs.file.impl.disable.cache=false; 
  
+1. show create table not working: 
+Authorization failed:No privilege 'Select' found for inputs { database:database_xxxx, table:table_abc}. 
+Use SHOW GRANT to get more details.
+
+Solution: set hive.security.authorization.enabled=false;
+try again !
+
+2. CONCAT_WS function is not working: 
+CONCAT_WS function must be "string or array<string>", but "int" was found
+
+Solution: Create table with column as string type for which this function is used.
+Note: But we can pass int as STRING TYPE to get it work
+
+
+3. Trim arguments sn/b of TYPE ->DATE or Decimal: 
+Wrong arguments 'dateofbirth': trim takes only STRING/CHAR/VARCHAR types Found DATE. 
+Wrong arguments 'amt': trim takes only STRING/CHAR/VARCHAR types. Found DECIMAL
+Note: But we can pass DATE/DECIMAL as STRING TYPE to get it work
+
+4. Select * & Count(*) Mismatch (queries shows count even after drop table)
+‘Select *’ is not showing anything, however ‘Select count(*)’ is giving some value:
+hive> select count(*) from database_xxxx.table_abc;
+3121
+
+Solution:
+hive> SET hive.compute.query.using.stats=FALSE;
+hive> select count(*) from database_xxxx.table_abc;   
+0
+
+5. Wrong result for count(*) in hive table                                                                                                                                             
+Source: http://stackoverflow.com/questions/24080276/wrong-result-for-count-in-hive-table
+count(*) is not giving the correct result, while the actual number of rows in table is different             
+Reason: I found this issue in count(*) if We are inserting into a table more than once. 
+Tables created with single insert soesn't raise any issue mutliple insert lead to inconsistent row count .
+
+Solution 1: 
+Internal table - drop n recreate the table, and insert into the table again then select count(*) will be incorrect. 
+External table - remove all the files in HDFS, and insert into the table again then select count(*) will be incorrect. 
+Solution 2:          
+ANALYZE TABLE table_abc PARTITION(day) COMPUTE STATISTICS;
+
+
+6. Index creation failed in Tez:
+CREATE TABLE table02 (column1 String, column2 bigint, column3 string); 
+CREATE INDEX table02_index ON TABLE table02 (column3) AS 'COMPACT' WITH DEFERRED REBUILD; 
+FAILED: Execution Error, return code 1 from org.apache.hadoop.hive.ql.exec.DDLTask. Indexes unsupported for Tez execution engine
+ALTER INDEX table02_index ON table02 REBUILD;
+
+Solution:
+set hive.execution.engine=mr;
+hive> CREATE INDEX table02_index ON TABLE table02 (column3) AS 'COMPACT' WITH DEFERRED REBUILD;
+
+So, for index creation on a table, we always have to set hive.execution.engine=mr 
+even if we want to use TEZ to perform queries on the data in that table? Is it limitation for TEZ?
+
+7. Normal query is working but functions are not working:
+   FAILED: DAG submit failed due to There is conflicting local resource. 
+   (I think resource could be function or dependent data as well)
+
+WorkAround:
+Check whether function used in query is there in Hive or not.
+show functions;
+
+Solution:
+set hive.llap.execution.mode=auto;
+
+8. Error:
+Input path does not exist: Or (below message on msck repair)
+Partitions missing from filesystem:
+Solution:
+Drop and re-create the table
+
+9.  IndexOutOfBoundsException Error while running query in Tez
+Solution: 
+upgrade to Hive 1.4 or greater
+Workaround:  
+Run the query without Partition pruning:
+set hive.tez.dynamic.partition.pruning=false;
+
