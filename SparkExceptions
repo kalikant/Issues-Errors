@@ -1,0 +1,13 @@
+ERROR akka.ErrorMonitor: Uncaught fatal error from thread [sparkDriverakka.
+actor.default-dispatcher-29] shutting down ActorSystem [sparkDriver]
+java.lang.OutOfMemoryError: Java heap space
+Exception in thread "task-result-getter-0" java.lang.OutOfMemoryError: Java heap space
+
+Increase the Spark executor Memory. If running in Yarn, its recommended to increase the overhead memory as well to avoid OOM issues.
+Overhead memory is used for JVM threads, internal metadata etc. The following setting is captured as part of the spark-submit or 
+in the spark-defaults.conf file
+ 
+--conf “spark.executor.memory=12g”
+--conf “spark.yarn.executor.memoryOverhead=2048”
+or
+-- "executor-memory=12g"
